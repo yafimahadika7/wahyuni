@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grafik Penjualan Tahunan</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .chart-container {
+            width: 80%;
+            max-width: 800px;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+        canvas {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-container">
+        <h2 style="text-align: center;">Grafik Penjualan Tahunan</h2>
+        <canvas id="salesChart"></canvas>
+    </div>
+
+    <script>
+        // Data penjualan (contoh)
+        const salesData = {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
+            datasets: [{
+                label: 'Penjualan Tahun 2024 (dalam juta)',
+                data: [10, 15, 20, 25, 18, 30, 35, 40, 28, 33, 45, 50],
+                backgroundColor: 'rgba(54, 162, 235, 0.5)', // Warna bar
+                borderColor: 'rgba(54, 162, 235, 1)', // Warna garis tepi
+                borderWidth: 1
+            }]
+        };
+
+        // Konfigurasi Chart
+        const config = {
+            type: 'bar', // Tipe chart (bar)
+            data: salesData,
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true // Skala dimulai dari 0
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        enabled: true,
+                        callbacks: {
+                            label: function (context) {
+                                return context.dataset.label + ': ' + context.raw + ' juta';
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        // Inisialisasi Chart
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        new Chart(ctx, config);
+    </script>
+</body>
+</html>

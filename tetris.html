@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> </title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1d1d27, #3a3a5a);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        canvas {
+            background-color: #222;
+            border: 2px solid white;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+
+        h1 {
+            margin: 10px 0;
+            font-size: 24px;
+        }
+
+        p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tetris Unik</h1>
+    <canvas id="tetris" width="240" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById('tetris');
+        const context = canvas.getContext('2d');
+        context.scale(20, 20);
+
+        const arena = createMatrix(12, 20);
+
+        const player = {
+            pos: { x: 0, y: 0 },
+            matrix: createPiece(),
+        };
+
+        // Tetromino shapes (customized)
+        function createPiece() {
+            const shapes = [
+                [
+                    [1, 0, 0],
+                    [1, 1, 1],
+                    [0, 0, 0],
+                ], // Custom L shape
+                [
+                    [0, 2, 2],
+                    [2, 2, 0],
+                    [0, 0, 0],
+                ], // Custom S shape
+                [
+                    [3, 3],
+                    [3, 3],
+                ], // Square shape
+                [
+                    [0, 4, 0],
+                    [4, 4, 4],
+                    [0, 0, 0],
+                ], // T shape
+                [
+                    [0, 0, 5, 0],
+                    [5, 5, 5, 5],
+                ], // Long I shape
+                [
+                    [6, 6, 0],
+                    [0, 6, 6],
+                    [0, 0, 0],
+                ], // Z shape
+                [
+                    [7, 7, 7],
+                    [0, 7, 0],
+                ], // Custom triangle shape
+            ];
+            return shapes[Math.floor(Math.random() * shapes.length)];
+        }
+
+        function createMatrix(width, height) {
+            const matrix = [];
+            while (height--) {
+                matrix.push(new Array(width).fill(0));
+            }
+            return matrix;
+        }
+
+        function collide(arena, player) {
+            const [m, o] = [player.matrix, player.pos];
+            for (let y = 0; y < m.length; y++) {
+                for (let x = 0; x < m[y].length; x++) {
+                    if (
+                        m[y][x] !== 0 &&
+                        (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0
+                    ) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function merge(arena, player) {
+            player.matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        arena[y + player.pos.y][x + player.pos.x] = value;
+                    }
+                });
+            });
+        }
+
+        function drawMatrix(matrix, offset) {
+            const colors = [
+                null,
+                '#FF6347', // Shape 1 - L
+                '#32CD32', // Shape 2 - S
+                '#FFD700', // Shape 3 - Square
+                '#4682B4', // Shape 4 - T
+                '#8A2BE2', // Shape 5 - I
+                '#FF4500', // Shape 6 - Z
+                '#00FA9A', // Shape 7 - Triangle
+            ];
+            matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        context.fillStyle = colors[value];
+                        context.fillRect(x + offset.x, y + offset.y, 1, 1);
+                    }
+                });
+            });
+        }
+
+        function draw() {
+            context.fillStyle = '#000';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            drawMatrix(arena, { x: 0, y: 0 });
+            drawMatrix(player.matrix, player.pos);
+        }
+
+        function drop() {
+            player.pos.y++;
+            if (collide(arena, player)) {
+                player.pos.y--;
+                merge(arena, player);
+                playerReset();
+                arenaSweep();
+            }
+            dropCounter = 0;
+        }
+
+        function playerReset() {
+            player.matrix = createPiece();
+            player.pos.y = 0;
+            player.pos.x =
+                ((arena[0].length / 2) | 0) - ((player.matrix[0].length / 2) | 0);
+            if (collide(arena, player)) {
+                alert('Game Over!');
+                arena.forEach((row) => row.fill(0));
+            }
+        }
+
+        function arenaSweep() {
+            outer: for (let y = arena.length - 1; y > 0; --y) {
+                for (let x = 0; x < arena[y].length; ++x) {
+                    if (arena[y][x] === 0) {
+                        continue outer;
+                    }
+                }
+                const row = arena.splice(y, 1)[0].fill(0);
+                arena.unshift(row);
+            }
+        }
+
+        function rotate(matrix) {
+            for (let y = 0; y < matrix.length; y++) {
+                for (let x = 0; x < y; x++) {
+                    [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
+                }
+            }
+            matrix.forEach((row) => row.reverse());
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowLeft') {
+                player.pos.x--;
+                if (collide(arena, player)) {
+                    player.pos.x++;
+                }
+            } else if (event.key === 'ArrowRight') {
+                player.pos.x++;
+                if (collide(arena, player)) {
+                    player.pos.x--;
+                }
+            } else if (event.key === 'ArrowUp') {
+                rotate(player.matrix);
+            } else if (event.key === 'ArrowDown') {
+                drop();
+            }
+        });
+
+        let dropCounter = 0;
+        let dropInterval = 1000;
+        let lastTime = 0;
+
+        function update(time = 0) {
+            const deltaTime = time - lastTime;
+            dropCounter += deltaTime;
+            if (dropCounter > dropInterval) {
+                drop();
+            }
+            lastTime = time;
+            draw();
+            requestAnimationFrame(update);
+        }
+
+        playerReset();
+        update();
+    </script>
+</body>
+</html>
